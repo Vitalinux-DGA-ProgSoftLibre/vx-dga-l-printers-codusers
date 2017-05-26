@@ -1,0 +1,55 @@
+#!/bin/bash
+
+## Comenzamos importando y definiendo las variables que usaremos posteriormente:
+. /etc/default/vx-dga-variables/vx-dga-variables-general.conf
+FICHVAR="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
+
+USUARIO="$(whoami)"
+# ETIQUETAS="$(migasfree-tags -g)"
+# Almacenamos temporalmente el documento que se trata de enviar a la impresora:
+cat "${TEADATAFILE}" > "/tmp/${TEAUSERNAME}-${TEAJOBID}-previo.prn"
+#if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
+if test "${USUARIO}" = "root" ; then
+
+	USUARIO="$(/usr/bin/vx-usuario-grafico)"
+	#HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
+
+	VALIDO=0
+	TEXTO="Hola ${TEAUSERNAME}!! Para poder imprimir es necesario introducir un <b>Código de Usuario<\/b>:\\\n\\\n"
+	sed -i "s/TEXTO=\".*\"/TEXTO=\"${TEXTO}\"/g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
+	while test ${VALIDO} -eq 0 ; do
+		export DISPLAY=:0 && \
+		su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo1.sh'
+
+		USERCODEPRINT=$(cat /tmp/codusuario-tea4cups-${TEAUSERNAME})
+		if [[ "${USERCODEPRINT}" =~ ^[0-9]+$ ]] ; then
+			VALIDO=1
+			# Para Ricoh PXL: PJL SET USERCODE
+			if grep "PJL SET USERCODE" "${TEADATAFILE}" &> /dev/null ; then
+				sed -i "0,/PJL SET USERCODE/{s#PJL SET USERCODE=.*#PJL SET USERCODE=\"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
+				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
+			fi
+			# Para Ricoh PS
+			if grep "^/usrcode(.*)def" "${TEADATAFILE}" &> /dev/null ; then
+				#sed -i "s/9999/${USERCODEPRINT}/g" "${TEADATAFILE}"
+				sed -e "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
+				LINEA="$(grep -an "CustomUserCode" "${TEADATAFILE}" | cut -d":" -f1)"
+				LINEA="$(expr ${LINEA} + 1)"
+				sed -e "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
+				
+				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
+			fi
+			# Para Konica
+			PJL SET KMSECTIONKEY2
+			if grep "PJL SET KMSECTIONKEY2" "${TEADATAFILE}" &> /dev/null ; then
+				sed -i "0,/KMSECTIONKEY2/{s#PJL SET KMSECTIONKEY2 = .*#PJL SET KMSECTIONKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
+				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"	
+			fi
+		else
+			TEXTO="¡¡Error, El Código de Usuario <b>debe estar compuesto únicamente por dígitos<\/b>!!"
+			TEXTO="${TEXTO}\\\nPor favor, tecléalo de nuevo ...\\\n\\\n"
+			sed -i "s/TEXTO=\".*\"/TEXTO=\"${TEXTO}\"/g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
+		fi
+	done
+
+fi

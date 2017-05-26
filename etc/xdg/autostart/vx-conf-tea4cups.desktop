@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+##Exec=sudo /usr/bin//usr/bin/vx-conf-tea4cups
+#Exec=sudo /sbin/start-stop-daemon --start --oknodo --quiet -b --exec /usr/bin/vx-conf-tea4cups
+Exec=sudo /sbin/start-stop-daemon --start --oknodo --quiet --name vx-dga-l-conf-tea4cups --pidfile /run/vx-conf-tea4cups.pid -b --exec /usr/bin/vx-conf-tea4cups
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[es_ES]=Configurar tea4cups - Impresión con Códigos
+Name=Configurar tea4cups - UserCode Printing
+Comment[es_ES]=Impresión con Códigos mediante Tea4cups
+Comment=UserCode Printing Tea4cups

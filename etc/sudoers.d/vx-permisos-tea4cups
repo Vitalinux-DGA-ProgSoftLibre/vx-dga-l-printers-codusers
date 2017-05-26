@@ -1,0 +1,6 @@
+# Forma de conceder privilegios a los usuarios:
+## alumno ALL = (root) [NOPASSWD:] ALL/comandos
+ALL ALL = (ALL) NOPASSWD: /sbin/start-stop-daemon --start --oknodo --quiet --name vx-dga-l-conf-tea4cups --pidfile /run/vx-dga-l-conf-tea4cups.pid -b --exec /usr/bin/vx-dga-l-conf-tea4cups
+ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-conf-tea4cups
+#ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-imprimir-con-usercode
+#ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-imprimir-con-usercode-info

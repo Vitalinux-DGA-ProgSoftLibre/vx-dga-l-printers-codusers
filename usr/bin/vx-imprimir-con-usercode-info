@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Información al usuario y aduditoria
+
+. /etc/default/vx-dga-variables/vx-dga-variables-general.conf
+
+function crear-log {
+	FICHERO="$1"
+	if ! test -f "${FICHERO}" ; then
+		echo -e "<html><head><title>Log Impresión</title><table>
+<thead><tr><th>Fecha</th><th>Documento</th><th>CID|JOBID</th><th>Impresora</th><th>Usuario|Código</th><th>Tamaño</th><th>Copias</th></tr></thead>
+</table></head><body></body></html>" > "${FICHERO}"
+	fi
+	sed -e "/<thead>/a <tr><td>${FECHA}<\/td><td>${TEATITLE}<\/td><td>${CID}|${TEAJOBID}<\/td><td>${TEAPRINTERNAME}<\/td><td>${TEAUSERNAME}|${USERCODEPRINT}<\/td><td>${SIZE}KB<\/td><td>${COPIAS}<\/td><\/tr>" "${FICHERO}"
+}
+
+USUARIO="$(whoami)"
+# ETIQUETAS="$(migasfree-tags -g)"
+# Almacenamos temporalmente el documento que se ha enviado a la impresora:
+cat "${TEADATAFILE}" > "/tmp/${TEAUSERNAME}-${TEAJOBID}-posterior.prn"
+#if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
+if test "${USUARIO}" = "root" ; then
+
+	USUARIO="$(/usr/bin/vx-usuario-grafico)"
+	HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
+	#USERCODE="${USERCODEPRINT}"
+
+	# Auditoria de Impresión:
+
+	TEATITLE="$(python -c "import sys, urllib as ul; print ul.quote_plus(sys.argv[1])" "${TEATITLE}")"
+	CID="$(migasfree-cid)"
+	FECHA="$(date +"%Y-%m-%d - %T")"
+	SIZE="$(expr ${TEAJOBSIZE} / 1024)"
+	COPIAS="$(pkpgcounter "${TEADATAFILE}")"
+
+	export DISPLAY=:0 && \
+	#su ${USUARIO} -c 'notify-send -i impresora-multifuncion \
+	#"Se ha enviado a la impresora ${TEAPRINTERNAME} el Documento ${TEATITLE}"'
+
+	export DISPLAY=:0 && \
+		su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo2.sh'
+
+	echo -e "=> [ ${FECHA} ] Documento: \"${TEATITLE}\" \
+\n\t CID|JOBID: \"${CID}|${TEAJOBID}\" \
+\n\t Impresora: \"${TEAPRINTERNAME}\" \
+\n\t Usuario|Codigo: \"${TEAUSERNAME}|${USERCODEPRINT}\" \
+\n\t Tamaño: \"${SIZE}KB\" \
+\n\t Copias: \"${COPIAS}\"" >> /var/log/printaccounting.log
+
+	if test -d /media/profesores ; then
+		if ! test -d /media/profesores/printaccounting ; then
+			mkdir -p /media/profesores/printaccounting
+		fi
+	fi
+
+	crear-log "/media/profesores/printaccounting/index.html"
+	crear-log "/var/log/printaccounting.log.html"
+
+	DESTINO="${HOMEUSUARIO}/Documentos/PDFs-Impresos"
+	if ! test -d "${DESTINO}" ; then
+		su ${TEAUSERNAME} -c 'mkdir -p "${DESTINO}"'
+		/bin/cat ${TEADATAFILE} | \
+			su ${TEAUSERNAME} -c "ps2pdf - ${DESTINO}/JOB-${TEAUSERNAME}-${TEAJOBID}.pdf"
+	fi
+fi
+
+<<COMENTARIOS
+# Parametros Ricoh (PXL):
+@PJL JOB
+@PJL SET AUTOTRAYCHANGE=ON
+@PJL SET ECONOMODE=OFF
+@PJL SET DUPLEX=ON
+@PJL SET BINDING=LONGEDGE
+@PJL SET MEDIATYPE=PLAIN
+@PJL SET OUTBIN=SYSDEFAULT
+@PJL SET STAPLE=OFF
+@PJL SET USERCODE="3333"
+@PJL SET COPIES=1
+@PJL SET RENDERMODE=GRAYSCALE
+@PJL SET RESOLUTION=600
+@PJL ENTER LANGUAGE = PCLXL
+
+# Parametros Ricoh (PS - PostScript)
+/lppswd()def
+/usrcode(191)def
+mark
+/usrcode where{pop}{/usrcode()def}ifelse
+(profesor) usrcode (201705181203) {setuserinfo} stopped
+cleartomark
+mark {
+<<
+   /JobType 0
+   /JobInfo <<
+      /UserID (profesor)
+      /Time (201705181203)
+      /HostLoginName (profesor)
+      /HostName (vitalinux)
+   >>
+>> /RDeviceProcSet /ProcSet findresource /SetJobType get exec
+}stopped cleartomark
+mark{
+userdict /RPS_BPdict 2 dict put
+userdict /RPS_BPdict get begin /RPS_BP_MEDIAPOSITION null def end
+} stopped cleartomark
+mark{
+userdict /RPS_BPdict get begin
+/RPS_BP_MEDIATYPE (Auto) def end
+} stopped cleartomark
+mark{
+<<
+/BannerPageMode false
+/MediaPosition null
+/MediaType null
+>>
+/RDeviceProcSet
+/ProcSet findresource
+/SetBannerPage get exec
+} stopped cleartomark
+%%%!PS-Adobe-3.0
+%%HiResBoundingBox: 0 0 595.00 842.00
+%%Creator: GPL Ghostscript 910 (ps2write)
+%%LanguageLevel: 2
+%%CreationDate: D:20170518120356+02'00'
+%%For: (profesor)
+%%Title: (prueba)
+%%Requirements: duplex
+%RBINumCopies: 1
+%%Pages: (atend)
+%%BoundingBox: (atend)
+%%EndComments
+%%BeginProlog
+
+# Parametros Konica:
+@PJL COMMENT
+@PJL SET USERNAME="profesor"
+@PJL SET JOBNAME="konica-bizhub-654e - CUPS 1.7.2"
+@PJL SET DRIVERJOBID="85"
+@PJL SET QTY=1
+@PJL SET KMCOETYPE=0
+@PJL SET KMSECTIONNAME = ""
+@PJL SET KMSECTIONKEY2 = "100"
+@PJL SET JIMONMODE = OFF
+@PJL SET DTSTPMODE = OFF
+@PJL SET PAGESTAMP = "NONE,1,1"
+@PJL ENTER LANGUAGE = POSTSCRIPT
+COMENTARIOS

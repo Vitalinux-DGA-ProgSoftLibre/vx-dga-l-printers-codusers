@@ -1,0 +1,13 @@
+#!/bin/bash
+
+USUARIO="$(whoami)"
+#HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
+ETIQUETAS="$(migasfree-tags -g)"
+if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
+	FICHERO="/etc/cups/printers.conf"
+	if test -f "${FICHERO}" ; then
+		if sed -i "/^DeviceURI/ { /tea4cups/! { s/\(DeviceURI \)\(.*\)/\1tea4cups:\/\/\2/g } }" "${FICHERO}" ; then
+			/etc/init.d/cups restart
+		fi
+	fi
+fi

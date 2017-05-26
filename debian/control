@@ -1,0 +1,13 @@
+Source: vx-dga-l-printers-codusers
+Section: utils
+Priority: extra
+Maintainer: Arturo Martín <amartinromero@gmail.com>
+Build-Depends: debhelper (>= 9.0.0)
+Standards-Version: 3.9.3
+Homepage: http://wiki.vitalinux.educa.aragon.es
+
+Package: vx-dga-l-printers-codusers
+Architecture: all
+Depends: ${misc:Depends}, cups-tea4cups, pkpgcounter, libnotify-bin, vx-dga-l-scripts
+Description: Impresión con códigos de usuario en Ricoh
+ Impresión con códigos de usuario en Ricoh

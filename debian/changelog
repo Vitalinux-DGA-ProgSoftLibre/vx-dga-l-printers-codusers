@@ -1,0 +1,5 @@
+vx-dga-l-printers-codusers (1.0-2) unstable; urgency=low
+
+  * Solicita Códigos de Impresión en el momento de imprimir
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 16 May 2017 01:00:00 +0200
