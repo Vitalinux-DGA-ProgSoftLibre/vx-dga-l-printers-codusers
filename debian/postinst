@@ -36,6 +36,12 @@ if ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 		sed -i '/Varibles utilizadas por los paquetes/a USERCODEPRINT=---' "${FICHERO}"
 		echo "=> Se incluye la variable \"USERCODEPRINT\" como variable global Vitalinux ..."
 	fi
+	if test -z "${NOMBREPRINT}" ; then
+		FICHERO="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
+		sed -i '/Varibles utilizadas por los paquetes/a NOMBREPRINT=profesor' "${FICHERO}"
+		echo "=> Se incluye la variable \"NOMBREPRINT\" como variable global Vitalinux ..."
+	fi
+
 
 	for FICHERO in "/usr/bin/vx-conf-tea4cups" \
 			"/usr/bin/vx-imprimir-con-usercode" \
@@ -66,6 +72,28 @@ if ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 		#sed -i "/^\[global/a posthook_docenvimpr : cat \${TEADATAFILE} > /tmp/\${TEAUSERNAME}-\${TEAJOBID}-posterior.prn" "${FICHERO}"
 		#echo "=> Se han añadido los scripts prehook y posthook para guardar el JOB temporalmente ..."
 	#fi
+
+	# Archivos de auditoria:
+	if test -d /media/profesores ; then
+		if ! test -d /media/profesores/printaccounting ; then
+			mkdir -p /media/profesores/printaccounting
+			chmod 755 /media/profesores/printaccounting
+		fi
+		FICHERO="/media/profesores/printaccounting/index.html"
+		if ! test -f "${FICHERO}" ; then
+			cp /usr/share/vitalinux/printers-tea4cups/index-base.html "${FICHERO}"
+			chmod 644 "${FICHERO}"
+		fi
+	fi
+	if ! test -d /var/log/vitalinux ; then
+		mkdir -p /var/log/vitalinux
+		chmod 755 /var/log/vitalinux	
+	fi
+	FICHERO="/var/log/vitalinux/printaccounting.log.html"
+	if ! test -f "${FICHERO}" ; then
+		cp /usr/share/vitalinux/printers-tea4cups/index-base.html "${FICHERO}"
+		chmod 644 "${FICHERO}"
+	fi
 
 	# Reiniciamos el servicio CUPS:
 	/etc/init.d/cups restart

@@ -1,3 +1,10 @@
+vx-dga-l-printers-codusers (1.0-3) unstable; urgency=low
+
+  * Se introduce el campo de nombre de usuario en la ventana emergente
+  * Se corrige algún problema con los PPDs PostSCript al cambiar el código
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Fri, 2 Jun 2017 01:00:00 +0200
+
 vx-dga-l-printers-codusers (1.0-2) unstable; urgency=low
 
   * Solicita Códigos de Impresión en el momento de imprimir

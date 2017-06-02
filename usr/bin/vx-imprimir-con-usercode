@@ -15,35 +15,42 @@ if test "${USUARIO}" = "root" ; then
 	#HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
 
 	VALIDO=0
-	TEXTO="Hola ${TEAUSERNAME}!! Para poder imprimir es necesario introducir un <b>Código de Usuario<\/b>:\\\n\\\n"
+	TEXTO="Hola ${TEAUSERNAME}!! Para poder imprimir es necesario introducir un <b>Nombre<\/b> y <b>Código de Usuario<\/b>:\\\n\\\n"
 	sed -i "s/TEXTO=\".*\"/TEXTO=\"${TEXTO}\"/g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
 	while test ${VALIDO} -eq 0 ; do
 		export DISPLAY=:0 && \
 		su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo1.sh'
 
 		USERCODEPRINT=$(cat /tmp/codusuario-tea4cups-${TEAUSERNAME})
+		sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
+		NOMBREPRINT=/tmp/codusuario-tea4cups-${TEAUSERNAME}
+		sed -i "s/^NOMBREPRINT=.*/NOMBREPRINT=${NOMBREPRINT}/g" "${FICHVAR}"
+
 		if [[ "${USERCODEPRINT}" =~ ^[0-9]+$ ]] ; then
 			VALIDO=1
 			# Para Ricoh PXL: PJL SET USERCODE
 			if grep "PJL SET USERCODE" "${TEADATAFILE}" &> /dev/null ; then
 				sed -i "0,/PJL SET USERCODE/{s#PJL SET USERCODE=.*#PJL SET USERCODE=\"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
+			fi
+			if grep "PJL SET USERID" "${TEADATAFILE}" &> /dev/null ; then
+				sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+			fi
+			if grep "PJL SET HOSTLOGINNAME" "${TEADATAFILE}" &> /dev/null ; then
+				sed -i "0,/PJL SET HOSTLOGINNAME/{s#PJL SET HOSTLOGINNAME=.*#PJL SET HOSTLOGINNAME=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
 			fi
 			# Para Ricoh PS
 			if grep "^/usrcode(.*)def" "${TEADATAFILE}" &> /dev/null ; then
 				#sed -i "s/9999/${USERCODEPRINT}/g" "${TEADATAFILE}"
-				sed -e "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
+				sed -i "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
 				LINEA="$(grep -an "CustomUserCode" "${TEADATAFILE}" | cut -d":" -f1)"
 				LINEA="$(expr ${LINEA} + 1)"
-				sed -e "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
+				sed -i "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
 				
-				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
 			fi
-			# Para Konica
-			PJL SET KMSECTIONKEY2
+			# Para Konica: PJL SET KMSECTIONKEY2
 			if grep "PJL SET KMSECTIONKEY2" "${TEADATAFILE}" &> /dev/null ; then
 				sed -i "0,/KMSECTIONKEY2/{s#PJL SET KMSECTIONKEY2 = .*#PJL SET KMSECTIONKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"	
+
 			fi
 		else
 			TEXTO="¡¡Error, El Código de Usuario <b>debe estar compuesto únicamente por dígitos<\/b>!!"
