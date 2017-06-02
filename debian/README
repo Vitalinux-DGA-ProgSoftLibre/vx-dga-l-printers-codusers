@@ -33,3 +33,113 @@ Para la instalación de paquetes que estan en el equipo local puede hacerse uso 
 ```
 gdebi vx-dga-l-*.deb
 ```
+
+# Parámetros a poder personalizar de las Fotocopiadoras:
+
+## Ricoh
+
+### Ricoh PCLXL (p.e MP 7000 del IES Pedro de Luna)
+
+@PJL SET COPIES=1
+@PJL SET ECONOMODE=OFF
+@PJL SET DUPLEX=OFF
+@PJL SET MEDIATYPE=PLAINORRECYCLED
+@PJL SET OUTBIN=SYSDEFAULT
+@PJL SET STAPLE=OFF
+@PJL SET PUNCH=OFF
+@PJL SET FOLD=OFF
+@PJL SET USERCODE="----"
+@PJL SET JOBPASSWORD2="----"
+@PJL SET USERID="dga"
+@PJL SET HOSTLOGINNAME="dga"
+@PJL SET DATE="2017/06/02"
+@PJL SET TIME="10:43:28"
+@PJL SET JOBID="Ricoh-Aficio-MP-7000 - CUPS 1.7.2"
+@PJL SET JOBNAME="Ricoh-Aficio-MP-7000 - CUPS 1.7.2"
+@PJL SECUREJOB
+@PJL SET RENDERMODE=GRAYSCALE
+@PJL SET RESOLUTION=600
+@PJL ENTER LANGUAGE = PCLXL
+
+### Ricoh PXL
+
+# Parametros Ricoh (PXL):
+@PJL JOB
+@PJL SET AUTOTRAYCHANGE=ON
+@PJL SET ECONOMODE=OFF
+@PJL SET DUPLEX=ON
+@PJL SET BINDING=LONGEDGE
+@PJL SET MEDIATYPE=PLAIN
+@PJL SET OUTBIN=SYSDEFAULT
+@PJL SET STAPLE=OFF
+@PJL SET USERCODE="----"
+@PJL SET COPIES=1
+@PJL SET RENDERMODE=GRAYSCALE
+@PJL SET RESOLUTION=600
+@PJL ENTER LANGUAGE = PCLXL
+
+### Ricoh PS (PS - PostScript)
+
+/lppswd()def
+/usrcode(191)def
+mark
+/usrcode where{pop}{/usrcode()def}ifelse
+(profesor) usrcode (201705181203) {setuserinfo} stopped
+cleartomark
+mark {
+<<
+   /JobType 0
+   /JobInfo <<
+      /UserID (profesor)
+      /Time (201705181203)
+      /HostLoginName (profesor)
+      /HostName (vitalinux)
+   >>
+>> /RDeviceProcSet /ProcSet findresource /SetJobType get exec
+}stopped cleartomark
+mark{
+userdict /RPS_BPdict 2 dict put
+userdict /RPS_BPdict get begin /RPS_BP_MEDIAPOSITION null def end
+} stopped cleartomark
+mark{
+userdict /RPS_BPdict get begin
+/RPS_BP_MEDIATYPE (Auto) def end
+} stopped cleartomark
+mark{
+<<
+/BannerPageMode false
+/MediaPosition null
+/MediaType null
+>>
+/RDeviceProcSet
+/ProcSet findresource
+/SetBannerPage get exec
+} stopped cleartomark
+%%%!PS-Adobe-3.0
+%%HiResBoundingBox: 0 0 595.00 842.00
+%%Creator: GPL Ghostscript 910 (ps2write)
+%%LanguageLevel: 2
+%%CreationDate: D:20170518120356+02'00'
+%%For: (profesor)
+%%Title: (prueba)
+%%Requirements: duplex
+%RBINumCopies: 1
+%%Pages: (atend)
+%%BoundingBox: (atend)
+%%EndComments
+%%BeginProlog
+
+### Konica
+
+@PJL COMMENT
+@PJL SET USERNAME="profesor"
+@PJL SET JOBNAME="konica-bizhub-654e - CUPS 1.7.2"
+@PJL SET DRIVERJOBID="85"
+@PJL SET QTY=1
+@PJL SET KMCOETYPE=0
+@PJL SET KMSECTIONNAME = ""
+@PJL SET KMSECTIONKEY2 = "100"
+@PJL SET JIMONMODE = OFF
+@PJL SET DTSTPMODE = OFF
+@PJL SET PAGESTAMP = "NONE,1,1"
+@PJL ENTER LANGUAGE = POSTSCRIPT
