@@ -3,11 +3,24 @@
 USUARIO="$(whoami)"
 #HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
 ETIQUETAS="$(migasfree-tags -g)"
+
 if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 	FICHERO="/etc/cups/printers.conf"
-	if test -f "${FICHERO}" ; then
-		if sed -i "/^DeviceURI/ { /tea4cups/! { s/\(DeviceURI \)\(.*\)/\1tea4cups:\/\/\2/g } }" "${FICHERO}" ; then
+
+	if ( echo "${ETIQUETAS}" | grep "CATALINADEARAGON" ) ; then
+		sed -i "s#tea4cups://##g" "${FICHERO}"
+		if sed -i "/172.30.1.104/ s/\(DeviceURI \)\(.*\)/\1tea4cups:\/\/\2/g" "${FICHERO}" ; then
 			/etc/init.d/cups restart
 		fi
+		exit 0
+	fi	
+
+	if ( echo "${ETIQUETAS}" | grep "MIGUELSERVET" ) ; then
+		sed -i "s#tea4cups://##g" "${FICHERO}"
+		if sed -i "/172.30.2.69/ s/\(DeviceURI \)\(.*\)/\1tea4cups:\/\/\2/g" "${FICHERO}" ; then
+			/etc/init.d/cups restart
+		fi
+		exit 0
 	fi
+	
 fi

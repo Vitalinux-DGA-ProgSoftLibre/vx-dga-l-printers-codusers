@@ -9,12 +9,16 @@ RESPUESTA=$(yad --title "Gestión de Impresión en Vitalinux" \
     --text "${TEXTO}" \
     --form \
     --field="Nombre de Usuario: " "${NOMBREPRINT}" \
-    --field="Código de Impresión" "${USERCODEPRINT}" \
-    --button="Imprimir:0")
+    --field="Código de Impresión: " "${USERCODEPRINT}" \
+    --button="Imprimir:0" --button="Cancelar:1")
+
+ESTADO=$?
+echo "${ESTADO}" | tee /tmp/estado-tea4cups-${TEAUSERNAME}
 
 if test $? -eq 0 ; then
-	echo "${RESPUESTA}" | cut -d"|" -f1 | tee /tmp/nombreprint-tea4cups-${TEAUSERNAME}
-	echo "${RESPUESTA}" | cut -d"|" -f2 | tee /tmp/codusuario-tea4cups-${TEAUSERNAME}
+	echo "${RESPUESTA}" | cut -d"|" -f1 | sed -e "s/ //g" | tee /tmp/nombreprint-tea4cups-${TEAUSERNAME}
+	echo "${RESPUESTA}" | cut -d"|" -f2 | sed -e "s/ //g" | tee /tmp/codusuario-tea4cups-${TEAUSERNAME}
 else
-	exit 1
+	TEASTATUS=255
+	exit 255
 fi

@@ -9,5 +9,5 @@ Homepage: http://wiki.vitalinux.educa.aragon.es
 Package: vx-dga-l-printers-codusers
 Architecture: all
 Depends: ${misc:Depends}, cups-tea4cups, pkpgcounter, libnotify-bin, vx-dga-l-scripts
-Description: Impresión con códigos de usuario en Ricoh
- Impresión con códigos de usuario en Ricoh
+Description: Impresión con códigos de usuario en Ricoh, Konica, y otras marcas
+ Gestión de la Impresión con códigos de usuario en Ricoh, Konica, y otras marcas

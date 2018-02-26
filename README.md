@@ -10,10 +10,14 @@ Centros Educativos donde quieran establecer una contabilidad de las copias de im
 
 # Aspectos Interesantes:
 
+El código o nombre del usuario introducido tendrán una validez durante 5 minutos.  Eso significa, que una vez dada la orden de imprimir y habiendo introducido un __nombre de usuario__ (_en caso de ser necesario_) y un __código de usuario__, no se volverán a solicitar hasta 5 minutos después, dando por hecho que el usuario que los introdujo es el mismo que esta dando las subsiguientes ordenes de impresión.
+
 El paquete también audita las copias enviadas:
 
 1) En el equipo local: en /var/log/printaccountig.log se audita las copias enviadas desde ese equipo
-2) En el servidor Caché: En el caso de contar con un servidor caché, de manera centralizada se auditarán las copias en /media/profesores/printaccounting
+2) En el servidor Caché: __¡¡En Desarrollo Todavía!! En breve estará disponible esta funcionalidad__
+
+Es importantísimo que el PPD que se usa de partida este configurado para el uso posterior que se le va a dar al sistema de impresión (User Authentication, Códigos de impresión, ...): [Listado de PPDs usados en los Centros Educativos de la Comunidad Autónoma de Arágon](http://migasfree.educa.aragon.es/ppds/)
 
 # Como Crear o Descargar el paquete DEB a partir del codigo de GitHub
 Para crear el paquete DEB será necesario encontrarse dentro del directorio donde localizan los directorios que componen el paquete.  Una vez allí, se ejecutará el siguiente comando (es necesario tener instalados los paquetes apt-get install debhelper devscripts):
@@ -143,3 +147,80 @@ mark{
 @PJL SET DTSTPMODE = OFF
 @PJL SET PAGESTAMP = "NONE,1,1"
 @PJL ENTER LANGUAGE = POSTSCRIPT
+
+### Konica (p.e. IES Miguel Servet - Konica Minolta C652SeriesPS)
+## Opciones de CPUS (localhost:631):
+# Account Track (Seguimiento de volumen EKC): Desactivado
+# User Authentication: MFP - Servidor auten: 1 - Nombre de usuario: Custom -  Contraseña: Custom
+
+@PJL COMMENT
+@PJL SET USERNAME="profesor"
+@PJL SET JOBNAME="Cambiar opciones impresora - CUPS 1.7.2"
+@PJL SET DRIVERJOBID="622"
+@PJL SET QTY=1
+@PJL SET KMCOETYPE=0
+@PJL SET KMUSERNAME = "nameusu"
+@PJL SET KMUSERKEY2 = "1234"
+@PJL SET BOXHOLDTYPE = PRIVATE
+@PJL SET KMCERTSERVTYPE = NONE
+@PJL SET JIMONMODE = OFF
+@PJL SET DTSTPMODE = OFF
+@PJL SET PAGESTAMP = "NONE,1,1"
+@PJL ENTER LANGUAGE = POSTSCRIPT
+...
+(8958)
+...
+(tec2)
+...
+
+# Actualizaciones del paquete:
+
+vx-dga-l-printers-codusers (1.0-9) unstable; urgency=low
+
+  * Se ha ajustado el contador de hojas con el archivo .prn generado
+  * Se ha añadido la variable OWNERID para indicar el nombre de usuario que se registra en Ricoh
+  * Se ha configurado el postinst para que en función de las etiquetas migasfree del equipo se decida que impresoras o fotocopiadoras gestionará tea4cups
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Thu, 21 Sep 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-8) unstable; urgency=low
+
+  * Se ha añadido un timeout al dialogo2 para evitar que quede sin cerrar
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 5 Sep 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-7) unstable; urgency=low
+
+  * Se ha añadido la opción de poder cancelar la impresión
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 5 Sep 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-6) unstable; urgency=low
+
+  * Configuración para la nueva Konica del IES Miguel Servet
+  * Konica (p.e. IES Miguel Servet - Konica Minolta C652SeriesPS)
+  * Opciones de CPUS (localhost:631):
+  * Account Track (Seguimiento de volumen EKC): Desactivado
+  * User Authentication: MFP - Servidor auten: 1 - Nombre de usuario: Custom.nameusu -  Contraseña: Custom.1234
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Mon, 4 Sep 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-5) unstable; urgency=low
+
+  * Se ha restringido tea4cups a la fotocopiadora en el IES Miguel Servet
+  * Evitamos que tea4cups afecte a otros modelos de impresora diferentes a la deseada
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 27 Jun 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-4) unstable; urgency=low
+
+  * Se introduce el campo de nombre de usuario en la ventana emergente
+  * Se corrige algún problema con los PPDs PostSCript al cambiar el código
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Fri, 2 Jun 2017 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.0-2) unstable; urgency=low
+
+  * Solicita Códigos de Impresión en el momento de imprimir
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 16 May 2017 01:00:00 +0200

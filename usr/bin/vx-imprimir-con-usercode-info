@@ -32,7 +32,10 @@ if test "${USUARIO}" = "root" ; then
 	CID="$(migasfree-cid)"
 	FECHA="$(date +"%Y-%m-%d - %T")"
 	SIZE="$(expr ${TEAJOBSIZE} / 1024)"
-	COPIAS="$(pkpgcounter "${TEADATAFILE}")"
+	COPIAS="$(/usr/bin/pkpgcounter "/tmp/${TEAUSERNAME}-${TEAJOBID}-posterior.prn")"
+	if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
+		sed -i "s/^COPIAS=\".*\"/COPIAS=\"${COPIAS}\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
+	fi
 
 	export DISPLAY=:0 && \
 	#su ${USUARIO} -c 'notify-send -i impresora-multifuncion \
@@ -48,27 +51,12 @@ if test "${USUARIO}" = "root" ; then
 \n\t Tamaño: \"${SIZE}KB\" \
 \n\t Copias: \"${COPIAS}\"" >> /var/log/printaccounting.log
 
-	if test -d /media/profesores ; then
-		if ! test -d /media/profesores/printaccounting ; then
-			mkdir -p /media/profesores/printaccounting
-			chmod 755 /media/profesores/printaccounting
-		fi
-	fi
-
-	crear-log "/media/profesores/printaccounting/index.html"
-	crear-log "/var/log/printaccounting.log.html"
-
 	DESTINO="${HOMEUSUARIO}/Documentos/PDFs-Impresos"
 	if ! test -d "${DESTINO}" ; then
-		su ${TEAUSERNAME} -c 'mkdir -p "${DESTINO}"'
+		su ${TEAUSERNAME} -c 'mkdir -p '"${DESTINO}"
+	else
+		chown -R ${USUARIO}.${USUARIO} "${DESTINO}"
 	fi
-	/bin/cat ${TEADATAFILE} | \
-			su ${TEAUSERNAME} -c "ps2pdf - ${DESTINO}/JOB-${TEAUSERNAME}-${TEAJOBID}.pdf"
+	
+	#su ${TEAUSERNAME} -c "/bin/cat ${TEADATAFILE} | ps2pdf - ${DESTINO}/JOB-${TEAUSERNAME}-${TEAJOBID}.pdf"
 fi
-
-<<COMENTARIOS
-
-Cosas a comentar:
-
-
-COMENTARIOS
