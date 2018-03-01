@@ -12,6 +12,10 @@ Centros Educativos donde quieran establecer una contabilidad de las copias de im
 
 El código o nombre del usuario introducido tendrán una validez durante 5 minutos.  Eso significa, que una vez dada la orden de imprimir y habiendo introducido un __nombre de usuario__ (_en caso de ser necesario_) y un __código de usuario__, no se volverán a solicitar hasta 5 minutos después, dando por hecho que el usuario que los introdujo es el mismo que esta dando las subsiguientes ordenes de impresión.
 
+Este periodo se puede cancelar reseteando los códigos de usuario (_CONTROL+ESPACIO y escribir "Resetear Códigos de Impresión_):
+
+![Reset de los Códigos de Impresión](https://github.com/Vitalinux-DGA-ProgSoftLibre/vx-dga-l-printers-codusers/blob/master/usr/share/vitalinux/printers-tea4cups/vx-resetear-c%C3%B3digos-de-impresion-tea4cups.png?raw)
+
 El paquete también audita las copias enviadas:
 
 1) En el equipo local: en /var/log/printaccountig.log se audita las copias enviadas desde ese equipo
