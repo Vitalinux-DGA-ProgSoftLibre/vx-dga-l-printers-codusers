@@ -18,7 +18,7 @@ function crear-log {
 USUARIO="$(whoami)"
 # ETIQUETAS="$(migasfree-tags -g)"
 # Almacenamos temporalmente el documento que se ha enviado a la impresora:
-cat "${TEADATAFILE}" > "/tmp/${TEAUSERNAME}-${TEAJOBID}-posterior.prn"
+cat "${TEADATAFILE}" > "/tmp/tea4cups-job-${TEAUSERNAME}-${TEAJOBID}-posterior.prn"
 #if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 if test "${USUARIO}" = "root" ; then
 
@@ -32,17 +32,28 @@ if test "${USUARIO}" = "root" ; then
 	CID="$(migasfree-cid)"
 	FECHA="$(date +"%Y-%m-%d - %T")"
 	SIZE="$(expr ${TEAJOBSIZE} / 1024)"
-	COPIAS="$(/usr/bin/pkpgcounter "/tmp/${TEAUSERNAME}-${TEAJOBID}-posterior.prn")"
+	COPIAS="$(/usr/bin/pkpgcounter "/tmp/tea4cups-job-${TEAUSERNAME}-${TEAJOBID}-posterior.prn")"
 	if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
 		sed -i "s/^COPIAS=\".*\"/COPIAS=\"${COPIAS}\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
 	fi
 
-	export DISPLAY=:0 && \
+	#export DISPLAY=:0 && \
 	#su ${USUARIO} -c 'notify-send -i impresora-multifuncion \
 	#"Se ha enviado a la impresora ${TEAPRINTERNAME} el Documento ${TEATITLE}"'
 
-	export DISPLAY=:0 && \
-		su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo2.sh'
+	FICH="/tmp/tea4cups-${TEAUSERNAME}-lastjob.vx"
+	if test -f "${FICH}" ; then
+		LASTTEATITLE="$(cat "${FICH}")"
+	else
+		LASTTEATITLE="---"
+	fi
+
+	if test "${TEATITLE}" != "${LASTTEATITLE}" ; then
+		export DISPLAY=:0 && \
+			su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo2.sh'
+	fi
+
+	echo "${TEATITLE}" > "${FICH}"
 
 	echo -e "=> [ ${FECHA} ] Documento: \"${TEATITLE}\" \
 \n\t CID|JOBID: \"${CID}|${TEAJOBID}\" \

@@ -13,12 +13,9 @@ RESPUESTA=$(yad --title "Gestión de Impresión en Vitalinux" \
     --button="Imprimir:0" --button="Cancelar:1")
 
 ESTADO=$?
-echo "${ESTADO}" | tee /tmp/estado-tea4cups-${TEAUSERNAME}
+echo "${ESTADO}" > /tmp/tea4cups-estado-${TEAUSERNAME}
 
-if test $? -eq 0 ; then
-	echo "${RESPUESTA}" | cut -d"|" -f1 | sed -e "s/ //g" | tee /tmp/nombreprint-tea4cups-${TEAUSERNAME}
-	echo "${RESPUESTA}" | cut -d"|" -f2 | sed -e "s/ //g" | tee /tmp/codusuario-tea4cups-${TEAUSERNAME}
-else
-	TEASTATUS=255
-	exit 255
+if test ${ESTADO} -eq 0 ; then
+	echo "${RESPUESTA}" | cut -d"|" -f1 | sed -e "s/ //g" > /tmp/tea4cups-nombreprint-${TEAUSERNAME}
+	echo "${RESPUESTA}" | cut -d"|" -f2 | sed -e "s/ //g" > /tmp/tea4cups-codusuario-${TEAUSERNAME}
 fi

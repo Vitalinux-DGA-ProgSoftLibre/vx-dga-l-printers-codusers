@@ -1,0 +1,21 @@
+[Desktop Entry]
+Encoding=UTF-8
+
+Name=Reset Printing Codes
+Name[en]=Reset Printing Codes
+Name[es]=Resetear Códigos de Impresión
+Name[es_ES]=Resetear Códigos de Impresión
+
+Comment=Application that allows reset Printing Codes of tea4cups
+Comment[en]=Application that allows reset Printing Codes of tea4cups
+Comment[es]=Aplicación que permite resetear los códigos de Impresión de tea4cups
+Comment[es_ES]=Aplicación que permite resetear los códigos de Impresión de tea4cups
+
+Icon=impresora-multifuncion
+
+Exec=sudo /usr/bin/vx-tea4cups-resetear-coduser
+Terminal=false
+Type=Application
+Categories=Sistema;
+StartupNotify=true
+Hidden=false

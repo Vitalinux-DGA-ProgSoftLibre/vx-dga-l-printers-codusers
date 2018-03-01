@@ -7,16 +7,18 @@ FECHA="$(date +"%Y-%m-%d - %T")"
 SIZE="$(expr ${TEAJOBSIZE} / 1024)"
 #COPIAS="$(/usr/bin/pkpgcounter ${TEADATAFILE})"
 COPIAS=""
-USERCODEPRINT="$(cat /tmp/codusuario-tea4cups-${TEAUSERNAME})"
-NOMBREPRINT="$(cat /tmp/nombreprint-tea4cups-${TEAUSERNAME} | tr -d '[:space:]')"
+USERCODEPRINT="$(cat /tmp/tea4cups-codusuario-${TEAUSERNAME})"
+NOMBREPRINT="$(cat /tmp/tea4cups-nombreprint-${TEAUSERNAME} | tr -d '[:space:]')"
+TIME_VALID_USER="modificado_desde_el_script:vx-imprimir-con-usercode"
 
 TEXTO="\t<b>¡¡Documento Enviado!!</b>"
 TEXTO="${TEXTO}\n\n\t[ ${FECHA} ] Documento: <tt><span foreground='blue'>\"${TEATITLE}\"</span></tt>"
 TEXTO="${TEXTO}\n\t CID|JOBID: <tt><span foreground='blue'>\"${CID}|${TEAJOBID}\"</span></tt>"
 TEXTO="${TEXTO}\n\t Impresora: <tt><span foreground='blue'>\"${TEAPRINTERNAME}\"</span></tt>"
 TEXTO="${TEXTO}\n\t Usuario|Codigo: <tt><span foreground='blue'>\"${NOMBREPRINT}|${USERCODEPRINT}\"</span></tt>"
+TEXTO="${TEXTO}\n\t Periodo Validez Codigo: <tt><span foreground='blue'>\"${TIME_VALID_USER}sg\"</span></tt>"
 TEXTO="${TEXTO}\n\t Tamaño: <tt><span foreground='blue'>\"${SIZE}KB\"</span></tt>"
-TEXTO="${TEXTO}\n\t Copias: <tt><span foreground='blue'>\"${COPIAS}\"</span></tt>"
+TEXTO="${TEXTO}\n\t Hojas|Copias: <tt><span foreground='blue'>\"${COPIAS}\"</span></tt>"
 
 yad --title "Impresión en Vitalinux" \
 	--center \

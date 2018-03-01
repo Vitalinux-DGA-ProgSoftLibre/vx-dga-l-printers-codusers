@@ -6,35 +6,40 @@ FICHVAR="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
 
 function solicitar_datos
 {
+
+	USUARIO_GRAFICO="$(/usr/bin/vx-usuario-grafico)"
+	#HOMEUSUARIO="$(getent passwd | grep "${USUARIO_GRAFICO}:" | cut -d":" -f6)"
+
 	export DISPLAY=:0 && \
-		su ${USUARIO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo1.sh'
+		su ${USUARIO_GRAFICO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo1.sh'
 
 	# Comprobamos el estado de salida del dialogo de impresión
-	ESTADO="$(cat /tmp/estado-tea4cups-${TEAUSERNAME})"
+	ESTADO="$(cat /tmp/tea4cups-estado-${TEAUSERNAME})"
 	if test ${ESTADO} -ne 0 ; then
+		echo "$(date) Se ha cancelado la impresión" > /tmp/tea4cups-info-out-$(date +%F-%H-%M-%S).vx
+		rm ${TEADATAFILE}
 		TEASTATUS=255
-		exit 255
+		exit -1
 	fi
 }
 
 USUARIO="$(whoami)"
 # ETIQUETAS="$(migasfree-tags -g)"
 # Almacenamos temporalmente el documento que se trata de enviar a la impresora:
-cat "${TEADATAFILE}" > "/tmp/${TEAUSERNAME}-${TEAJOBID}-previo.prn"
+cat "${TEADATAFILE}" > "/tmp/tea4cups-job-${TEAUSERNAME}-${TEAJOBID}-previo.prn"
 #if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 if test "${USUARIO}" = "root" ; then
 
-	USUARIO="$(/usr/bin/vx-usuario-grafico)"
-	#HOMEUSUARIO="$(getent passwd | grep "${USUARIO}:" | cut -d":" -f6)"
-
 	VALIDO=0
-	TEXTO="\nHola!! Para poder imprimir es necesario introducir un <b>Nombre<\/b> y <b>Código de Usuario<\/b>.  Estas credenciales se mantendrán activas para futuras ordenes de impresión durante 5 minutos:\\\n\\\n"
-	sed -i "s/TEXTO=\".*\"/TEXTO=\"${TEXTO}\"/g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
+	TEXTO="\\\nEs necesario introducir un <b>Nombre<\/b> y\/o <b>Código de Usuario<\/b>."
+	TEXTO="${TEXTO}\\\nEstas credenciales se mantendrán activas para futuras ordenes de impresión \\\n"
+	TEXTO="${TEXTO}durante los próximos <b>5 minutos</b>. \\\n\\\n"
+	sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
 	while test ${VALIDO} -eq 0 ; do
 
 
-		FICH_CODUSER="/tmp/codusuario-tea4cups-${TEAUSERNAME}"
-		FICH_NAMEUSER="/tmp/nombreprint-tea4cups-${TEAUSERNAME}" 
+		FICH_CODUSER="/tmp/tea4cups-codusuario-${TEAUSERNAME}"
+		FICH_NAMEUSER="/tmp/tea4cups-nombreprint-${TEAUSERNAME}" 
 		
 		if test -f "${FICH_CODUSER}" && \
 			test -f "${FICH_NAMEUSER}" ; then
@@ -43,17 +48,35 @@ if test "${USUARIO}" = "root" ; then
 			TIME_CURRENT="$(date +%s)"
 			TIME_GAP_CURRENT="$(( ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} ))"
 			TIME_GAP_MAX="300"
-			if [[ "${TIME_GAP_CURRENT}" > "${TIME_GAP_MAX}" ]] ; then
+			TIME_VALID_USER="$(( ${TIME_GAP_MAX} - ${TIME_GAP_CURRENT} ))"
+			if test ${TIME_VALID_USER} -lt 0 ; then
+				TIME_VALID_USER="${TIME_GAP_MAX}"
+			fi
+			
+			(	
+				echo "Perido máximo de Validez: ${TIME_GAP_MAX}"
+				echo "Perido de validez actual: ${TIME_VALID_USER}"
+				echo "Time Actual - Ultima Modificacion: ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} = ${TIME_GAP_CURRENT}"
+			) > "/tmp/tea4cups-time_valid_user-${TEAUSERNAME}"
+			
+			if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
+				sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"${TIME_VALID_USER}\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
+			fi
+
+			if test ${TIME_GAP_CURRENT} -gt ${TIME_GAP_MAX} ; then
 				solicitar_datos
 			fi
 		else
-			solicitar_datos		
+			solicitar_datos
+			if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
+				sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"300\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
+			fi
 		fi
 
-		USERCODEPRINT="$(cat /tmp/codusuario-tea4cups-${TEAUSERNAME})"
+		USERCODEPRINT="$(cat /tmp/tea4cups-codusuario-${TEAUSERNAME})"
 		#sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
 		##sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=1234/g" "${FICHVAR}"
-		NAMEUSU="$(cat /tmp/nombreprint-tea4cups-${TEAUSERNAME} | tr -d '[:space:]')"
+		NAMEUSU="$(cat /tmp/tea4cups-nombreprint-${TEAUSERNAME} | tr -d '[:space:]')"
 		NOMBREPRINT="$(expr substr "${NAMEUSU}" 1 7)"
 		##sed -i "s/^NOMBREPRINT=.*/NOMBREPRINT=${NOMBREPRINT}/g" "${FICHVAR}"
 
@@ -133,7 +156,7 @@ if test "${USUARIO}" = "root" ; then
 			TEXTO="¡¡Error, Debes escribir un <b>Código de Usuario<\/b>!!"
 			TEXTO="${TEXTO}\\\nAdemás ... ¡¡<b>El Nombre no debe exceder de 12 caracteres<\/b>!!"
 			TEXTO="${TEXTO}\\\nPor favor, tecléalo de nuevo ...\\\n\\\n"
-			sed -i "s/TEXTO=\".*\"/TEXTO=\"${TEXTO}\"/g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
+			sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
 		fi
 	done
 fi
