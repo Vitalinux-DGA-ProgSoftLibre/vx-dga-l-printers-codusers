@@ -23,19 +23,19 @@ set -e
 
 
 case "$1" in
-	configure)
-
-echo "=> Vamos a pasar a configurar tea4cups ..."
-ETIQUETAS=$(migasfree-tags -g)
-echo "=> Las etiquetas migasfree del equipo son: ${ETIQUETAS}"
-if ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
-	echo "=> Ok!! Es un equipo de centro. Preparamos el equipo por si son necesarios Códigos de impresión (tea4cups) ..."
-
-	FICHERO="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
-	sed -i "/^USERCODEPRINT/d" "${FICHERO}"
-	sed -i '/Varibles utilizadas por los paquetes/a USERCODEPRINT=tucodigo' "${FICHERO}"
-	sed -i "/^NOMBREPRINT/d" "${FICHERO}"
-	sed -i '/Varibles utilizadas por los paquetes/a NOMBREPRINT=tunombre' "${FICHERO}"
+    configure)
+        
+        echo "=> Vamos a pasar a configurar tea4cups ..."
+        ETIQUETAS=$(migasfree-tags -g)
+        echo "=> Las etiquetas migasfree del equipo son: ${ETIQUETAS}"
+        if ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
+            echo "=> Ok!! Es un equipo de centro. Preparamos el equipo por si son necesarios Códigos de impresión (tea4cups) ..."
+            
+            FICHERO="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
+            sed -i "/^USERCODEPRINT/d" "${FICHERO}"
+            sed -i '/Varibles utilizadas por los paquetes/a USERCODEPRINT=tucodigo' "${FICHERO}"
+            sed -i "/^NOMBREPRINT/d" "${FICHERO}"
+            sed -i '/Varibles utilizadas por los paquetes/a NOMBREPRINT=tunombre' "${FICHERO}"
 <<FORMA_ANTERIOR
 	#if test -z "${USERCODEPRINT}" ; then
 	if ! grep "^USERCODEPRINT" "${FICHERO}" &> /dev/null ; then
@@ -51,22 +51,22 @@ if ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 		sed -i "s/^NOMBREPRINT=.*/NOMBREPRINT=tunombre/g" "${FICHERO}"
 	fi
 FORMA_ANTERIOR
-
-	for FICHERO in "/usr/bin/vx-conf-tea4cups" \
-			"/usr/bin/vx-imprimir-con-usercode" \
-			"/usr/bin/vx-imprimir-con-usercode-info" \
-			"/usr/share/vitalinux/printers-tea4cups/dialogo1.sh" \
-			"/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" \
-			"/usr/share/vitalinux/printers-tea4cups/vx-prehook-personalizar-impresion.sh" \
-			"/usr/share/vitalinux/printers-tea4cups/vx-posthook-personalizar-impresion.sh" ; do
-		if test -f "${FICHERO}" ; then
-			chmod +x "${FICHERO}"
-		fi
-	done
-
-	# El archivo printers.conf lo configuramos ahora vía falla
-	##/usr/bin/vx-conf-tea4cups
-	##echo "=> Sea configurado el archivo printers.conf para que las impresoras las gestione Tea4cups"
+            
+            for FICHERO in "/usr/bin/vx-conf-tea4cups" \
+            "/usr/bin/vx-imprimir-con-usercode" \
+            "/usr/bin/vx-imprimir-con-usercode-info" \
+            "/usr/share/vitalinux/printers-tea4cups/dialogo1.sh" \
+            "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" \
+            "/usr/share/vitalinux/printers-tea4cups/vx-prehook-personalizar-impresion.sh" \
+            "/usr/share/vitalinux/printers-tea4cups/vx-posthook-personalizar-impresion.sh" ; do
+                if test -f "${FICHERO}" ; then
+                    chmod +x "${FICHERO}"
+                fi
+            done
+            
+            # El archivo printers.conf lo configuramos ahora vía falla
+            ##/usr/bin/vx-conf-tea4cups
+            ##echo "=> Sea configurado el archivo printers.conf para que las impresoras las gestione Tea4cups"
 <<FORMA_ANTERIOR
 	FICHERO="/etc/cups/printers.conf"
 	if test -f "${FICHERO}" ; then
@@ -74,69 +74,72 @@ FORMA_ANTERIOR
 		echo "=> Sea configurado el archivo printers.conf para que las impresoras las gestione Tea4cups"
 	fi
 FORMA_ANTERIOR
-
-	FICHERO="/etc/cups/tea4cups.conf"
-
-	# Eliminamos posibles líneas duplicadas:
-	if test "$(grep ^prehook_usercode "${FICHERO}" | wc -l)" -gt 1 ; then
-		sed --follow-symlinks -i "/^prehook_usercode.*/d" "${FICHERO}"
-	fi
-
-	if test "$(grep ^posthook_usercode "${FICHERO}" | wc -l)" -gt 1 ; then
-		sed --follow-symlinks -i "/^posthook_usercode.*/d" "${FICHERO}"
-	fi
-
-	# Introducimos la líneas correspondientes a los scripts prehook y posthook:
-	if ! grep "^prehook_usercode" "${FICHERO}" &> /dev/null ; then
-		#prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
-		sed --follow-symlinks -i "/^\[global/a prehook_usercode : /usr/bin/vx-imprimir-con-usercode" "${FICHERO}"
-		echo "=> Se han añadido el script prehook para la posible gestión de códigos ..."
-	fi
-	if ! grep "^prehook_customcentro" "${FICHERO}" &> /dev/null ; then
-		#prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
-		sed --follow-symlinks -i "/^\[global/a prehook_customcentro : /usr/share/vitalinux/printers-tea4cups/vx-prehook-personalizar-impresion.sh" "${FICHERO}"
-		echo "=> Se han añadido el script prehook para la posible personalización de la impresión por parte del centro ..."
-	fi
-
-
-	if ! grep "^posthook_usercode" "${FICHERO}" &> /dev/null ; then
-		#posthook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-despues.prn
-		sed -i "/^\[global/a posthook_usercodeinfo : /usr/bin/vx-imprimir-con-usercode-info" "${FICHERO}"
-		echo "=> Se han añadido el script posthook para la posible gestión de códigos ..."
-	fi
-	if ! grep "^posthook_customcentro" "${FICHERO}" &> /dev/null ; then
-		#prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
-		sed --follow-symlinks -i "/^\[global/a posthook_customcentro : /usr/share/vitalinux/printers-tea4cups/vx-posthook-personalizar-impresion.sh" "${FICHERO}"
-		echo "=> Se han añadido el script prehook para la posible personalización de la impresión por parte del centro ..."
-	fi
-
-	#if ! grep "hook_docenvimpr" "${FICHERO}" &> /dev/null ; then
-		#sed -i "/^\[global/a prehook_docenvimpr : cat \${TEADATAFILE} > /tmp/\${TEAUSERNAME}-\${TEAJOBID}-previo.prn" "${FICHERO}"
-		#sed -i "/^\[global/a posthook_docenvimpr : cat \${TEADATAFILE} > /tmp/\${TEAUSERNAME}-\${TEAJOBID}-posterior.prn" "${FICHERO}"
-		#echo "=> Se han añadido los scripts prehook y posthook para guardar el JOB temporalmente ..."
-	#fi
-
-
-	if ! test -d /var/log/vitalinux ; then
-		mkdir -p /var/log/vitalinux
-		chmod 755 /var/log/vitalinux	
-	fi
-
-	FICHERO="/var/log/vitalinux/printaccounting.log.html"
-	if ! test -f "${FICHERO}" ; then
-		cp /usr/share/vitalinux/printers-tea4cups/index-base.html "${FICHERO}"
-		chmod 644 "${FICHERO}"
-	fi
-
-	# Reiniciamos el servicio CUPS:
-	/etc/init.d/cups restart
-
-fi
-	;;
-
+            
+            FICHERO="/etc/cups/tea4cups.conf"
+            
+            # Eliminamos posibles líneas duplicadas:
+            if test "$(grep ^prehook_usercode "${FICHERO}" | wc -l)" -gt 1 ; then
+                sed --follow-symlinks -i "/^prehook_usercode.*/d" "${FICHERO}"
+            fi
+            
+            if test "$(grep ^posthook_usercode "${FICHERO}" | wc -l)" -gt 1 ; then
+                sed --follow-symlinks -i "/^posthook_usercode.*/d" "${FICHERO}"
+            fi
+            
+            # Introducimos la líneas correspondientes a los scripts prehook y posthook:
+            if ! grep "^prehook_usercode" "${FICHERO}" &> /dev/null ; then
+                #prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
+                sed --follow-symlinks -i "/^\[global/a prehook_usercode : /usr/bin/vx-imprimir-con-usercode" "${FICHERO}"
+                echo "=> Se han añadido el script prehook para la posible gestión de códigos ..."
+            fi
+            if ! grep "^prehook_customcentro" "${FICHERO}" &> /dev/null ; then
+                #prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
+                sed --follow-symlinks -i "/^\[global/a prehook_customcentro : /usr/share/vitalinux/printers-tea4cups/vx-prehook-personalizar-impresion.sh" "${FICHERO}"
+                echo "=> Se han añadido el script prehook para la posible personalización de la impresión por parte del centro ..."
+            fi
+            
+            
+            if ! grep "^posthook_usercode" "${FICHERO}" &> /dev/null ; then
+                #posthook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-despues.prn
+                sed -i "/^\[global/a posthook_usercodeinfo : /usr/bin/vx-imprimir-con-usercode-info" "${FICHERO}"
+                echo "=> Se han añadido el script posthook para la posible gestión de códigos ..."
+            fi
+            if ! grep "^posthook_customcentro" "${FICHERO}" &> /dev/null ; then
+                #prehook_0 : cat $TEADATAFILE >/tmp/$TEAUSERNAME-$TEAJOBID-antes.prn
+                sed --follow-symlinks -i "/^\[global/a posthook_customcentro : /usr/share/vitalinux/printers-tea4cups/vx-posthook-personalizar-impresion.sh" "${FICHERO}"
+                echo "=> Se han añadido el script prehook para la posible personalización de la impresión por parte del centro ..."
+            fi
+            
+            #if ! grep "hook_docenvimpr" "${FICHERO}" &> /dev/null ; then
+            #sed -i "/^\[global/a prehook_docenvimpr : cat \${TEADATAFILE} > /tmp/\${TEAUSERNAME}-\${TEAJOBID}-previo.prn" "${FICHERO}"
+            #sed -i "/^\[global/a posthook_docenvimpr : cat \${TEADATAFILE} > /tmp/\${TEAUSERNAME}-\${TEAJOBID}-posterior.prn" "${FICHERO}"
+            #echo "=> Se han añadido los scripts prehook y posthook para guardar el JOB temporalmente ..."
+            #fi
+            
+            FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
+            [ ! -f "${FICHTIMECODYSER}" ] && \
+            echo -e '[general]\nTIME_GAP_MAX=300\nMODO_PASS=0' > "${FICHTIMECODYSER}"
+            
+            if ! test -d /var/log/vitalinux ; then
+                mkdir -p /var/log/vitalinux
+                chmod 755 /var/log/vitalinux
+            fi
+            
+            FICHERO="/var/log/vitalinux/printaccounting.log.html"
+            if ! test -f "${FICHERO}" ; then
+                cp /usr/share/vitalinux/printers-tea4cups/index-base.html "${FICHERO}"
+                chmod 644 "${FICHERO}"
+            fi
+            
+            # Reiniciamos el servicio CUPS:
+            /etc/init.d/cups restart
+            
+        fi
+    ;;
+    
     abort-upgrade|abort-remove|abort-deconfigure)
     ;;
-
+    
     *)
         echo "postinst called with unknown argument \`$1'" >&2
         exit 1

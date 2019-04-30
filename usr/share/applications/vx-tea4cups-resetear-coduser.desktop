@@ -16,6 +16,6 @@ Icon=impresora-multifuncion
 Exec=sudo /usr/bin/vx-tea4cups-resetear-coduser
 Terminal=false
 Type=Application
-Categories=Sistema;
+Categories=Vitalinux;
 StartupNotify=true
 Hidden=false

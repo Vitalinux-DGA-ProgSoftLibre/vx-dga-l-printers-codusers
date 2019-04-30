@@ -9,7 +9,7 @@ RESPUESTA=$(yad --title "Gestión de Impresión en Vitalinux" \
     --text "${TEXTO}" \
     --form \
     --field="Nombre de Usuario: " "${NOMBREPRINT}" \
-    --field="Código de Impresión: " "${USERCODEPRINT}" \
+    --field="Código de Impresión: ":H "${USERCODEPRINT}" \
 --button="Imprimir:0" --button="Cancelar:1")
 
 ESTADO=$?

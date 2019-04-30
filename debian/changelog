@@ -1,3 +1,20 @@
+vx-dga-l-printers-codusers (1.1-5) unstable; urgency=low
+
+  * Se añade la opción PJL SET USERNAME para los PPDs de Sharp
+  * Esto nos permite personalizar la retención en la fotocopiadora
+  * Demandado por el IES Goya
+  * Se crea un archivo de variables /etc/default/vx-dga-variables/vx-tea4cups-codusers
+  * Mediante la variable TIME_GAP_MAX personalizamos el tiempo de espera (por defecto 300)
+  * Mediante la variable MODO_PASS decidimos is el coduser es visible o no (0 o 1, por defecto 0)
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 30 Apr 2019 01:00:00 +0200
+
+vx-dga-l-printers-codusers (1.1-4) unstable; urgency=low
+
+  * Lanzador de reset code-user -> Vitalinux
+
+ -- Ignacio Sancho <sannacho@gmail.com>  Wed, 12 Dec 2018 01:00:00 +0200
+
 vx-dga-l-printers-codusers (1.1-3) unstable; urgency=low
 
   * Se ha añadido un tiempo de de validez de codigos introducidos de 5 minutos

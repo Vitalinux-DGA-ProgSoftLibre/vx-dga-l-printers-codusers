@@ -4,23 +4,30 @@
 . /etc/default/vx-dga-variables/vx-dga-variables-general.conf
 FICHVAR="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
 
+FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
+MODO_PASS="$(crudini --get "${FICHTIMECODYSER}" general MODO_PASS 2> /dev/null)"
+[ -z "${MODO_PASS}" ] && MODO_PASS="0"
+[ "${MODO_PASS}" == "0" ] && \
+DIALOGO1="/usr/share/vitalinux/printers-tea4cups/dialogo1.sh" || \
+DIALOGO1="/usr/share/vitalinux/printers-tea4cups/dialogo1-password.sh"
+
 function solicitar_datos
 {
-
-	USUARIO_GRAFICO="$(/usr/bin/vx-usuario-grafico)"
-	#HOMEUSUARIO="$(getent passwd | grep "${USUARIO_GRAFICO}:" | cut -d":" -f6)"
-
-	export DISPLAY=:0 && \
-		su ${USUARIO_GRAFICO} -c '/usr/share/vitalinux/printers-tea4cups/dialogo1.sh'
-
-	# Comprobamos el estado de salida del dialogo de impresión
-	ESTADO="$(cat /tmp/tea4cups-estado-${TEAUSERNAME})"
-	if test ${ESTADO} -ne 0 ; then
-		echo "$(date) Se ha cancelado la impresión" > /tmp/tea4cups-info-out-$(date +%F-%H-%M-%S).vx
-		rm ${TEADATAFILE}
-		TEASTATUS=255
-		exit -1
-	fi
+    
+    USUARIO_GRAFICO="$(/usr/bin/vx-usuario-grafico)"
+    #HOMEUSUARIO="$(getent passwd | grep "${USUARIO_GRAFICO}:" | cut -d":" -f6)"
+    
+    export DISPLAY=:0 && \
+    su ${USUARIO_GRAFICO} -c "${DIALOGO1}"
+    
+    # Comprobamos el estado de salida del dialogo de impresión
+    ESTADO="$(cat /tmp/tea4cups-estado-${TEAUSERNAME})"
+    if test ${ESTADO} -ne 0 ; then
+        echo "$(date) Se ha cancelado la impresión" > /tmp/tea4cups-info-out-$(date +%F-%H-%M-%S).vx
+        rm ${TEADATAFILE}
+        TEASTATUS=255
+        exit -1
+    fi
 }
 
 USUARIO="$(whoami)"
@@ -29,134 +36,144 @@ USUARIO="$(whoami)"
 cat "${TEADATAFILE}" > "/tmp/tea4cups-job-${TEAUSERNAME}-${TEAJOBID}-previo.prn"
 #if ( test "${USUARIO}" = "root" ) && ( echo "${ETIQUETAS}" | grep -v "ENT-CASA" &> /dev/null ) ; then
 if test "${USUARIO}" = "root" ; then
-
-	VALIDO=0
-	TEXTO="\\\nEs necesario introducir un <b>Nombre<\/b> y\/o <b>Código de Usuario<\/b>."
-	TEXTO="${TEXTO}\\\nEstas credenciales se mantendrán activas para futuras ordenes de impresión \\\n"
-	TEXTO="${TEXTO}durante los próximos <b>5 minutos</b>. \\\n\\\n"
-	sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
-	while test ${VALIDO} -eq 0 ; do
-
-
-		FICH_CODUSER="/tmp/tea4cups-codusuario-${TEAUSERNAME}"
-		FICH_NAMEUSER="/tmp/tea4cups-nombreprint-${TEAUSERNAME}" 
-		
-		if test -f "${FICH_CODUSER}" && \
-			test -f "${FICH_NAMEUSER}" ; then
-			# Comprobamos si se sacó el dialogo en los últimos 5 minutos
-			TIME_LAST_MIDIFIED="$(stat --format %Y "${FICH_CODUSER}")"
-			TIME_CURRENT="$(date +%s)"
-			TIME_GAP_CURRENT="$(( ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} ))"
-			TIME_GAP_MAX="300"
-			TIME_VALID_USER="$(( ${TIME_GAP_MAX} - ${TIME_GAP_CURRENT} ))"
-			if test ${TIME_VALID_USER} -lt 0 ; then
-				TIME_VALID_USER="${TIME_GAP_MAX}"
-			fi
-			
-			(	
-				echo "Perido máximo de Validez: ${TIME_GAP_MAX}"
-				echo "Perido de validez actual: ${TIME_VALID_USER}"
-				echo "Time Actual - Ultima Modificacion: ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} = ${TIME_GAP_CURRENT}"
-			) > "/tmp/tea4cups-time_valid_user-${TEAUSERNAME}"
-			
-			if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
-				sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"${TIME_VALID_USER}\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
-			fi
-
-			if test ${TIME_GAP_CURRENT} -gt ${TIME_GAP_MAX} ; then
-				solicitar_datos
-			fi
-		else
-			solicitar_datos
-			if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
-				sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"300\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
-			fi
-		fi
-
-		USERCODEPRINT="$(cat /tmp/tea4cups-codusuario-${TEAUSERNAME})"
-		#sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
-		##sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=1234/g" "${FICHVAR}"
-		NAMEUSU="$(cat /tmp/tea4cups-nombreprint-${TEAUSERNAME} | tr -d '[:space:]')"
-		NOMBREPRINT="$(expr substr "${NAMEUSU}" 1 7)"
-		##sed -i "s/^NOMBREPRINT=.*/NOMBREPRINT=${NOMBREPRINT}/g" "${FICHVAR}"
-
-		# En el caso de que queramos imponer código compuesto solo por números
-		#if [[ "${USERCODEPRINT}" =~ ^[0-9]+$ ]] && [[ "${#NOMBREPRINT}" -le 8 ]] ; then
-		# En el CEIP Juan Pablo Bonet el código lleva letras
-		if [[ "${#USERCODEPRINT}" -ge 2 ]] && [[ "${#NOMBREPRINT}" -le 12 ]] ; then			
-			VALIDO=1
-
-			# Para Ricoh PXL: PJL SET USERCODE
-			if grep -a "PJL SET USERCODE" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "0,/PJL SET USERCODE/{s#PJL SET USERCODE=.*#PJL SET USERCODE=\"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
-			fi
-			if grep -a "PJL SET JOBPASSWORD2" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "s/^@PJL SET JOBPASSWORD2=.*/@PJL SET JOBPASSWORD2=\"${USERCODEPRINT}\"/g" "${TEADATAFILE}"
-                        fi
-			if grep -a "PJL SET USERID" "${TEADATAFILE}" &> /dev/null ; then
-				# sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^@PJL SET USERID=.*/@PJL SET USERID=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
-			fi
-			if grep -a "PJL SET OWNERID" "${TEADATAFILE}" &> /dev/null ; then
-				# sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^@PJL SET OWNERID=.*/@PJL SET OWNERID=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
-			fi
-			if grep -a "PJL SET HOSTLOGINNAME" "${TEADATAFILE}" &> /dev/null ; then
-				# sed -i "0,/PJL SET HOSTLOGINNAME/{s#PJL SET HOSTLOGINNAME=.*#PJL SET HOSTLOGINNAME=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^@PJL SET HOSTLOGINNAME=.*/@PJL SET HOSTLOGINNAME=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
-			fi
-
-			# Para Ricoh PS
-			if grep -a "^/usrcode(.*)def" "${TEADATAFILE}" &> /dev/null ; then
-				#sed -i "s/9999/${USERCODEPRINT}/g" "${TEADATAFILE}"
-				sed -i "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
-				LINEA="$(grep -an "CustomUserCode" "${TEADATAFILE}" | cut -d":" -f1)"
-				LINEA="$(expr ${LINEA} + 1)"
-				sed -i "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
-				
-			fi
-
-			# Para Konica: PJL SET KMSECTIONKEY2 (p.e. IES Torre de los Espejos)
-			if grep -a "PJL SET KMSECTIONKEY2" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "0,/KMSECTIONKEY2/{s#PJL SET KMSECTIONKEY2 = .*#PJL SET KMSECTIONKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
-			fi
-
-			# Para Konica: Sin seguimiento de Volumen (EKC), pero con autenticación de usuario: KMUSERNAME y KMUSERKEY2
-			### Konica (p.e. IES Miguel Servet - Konica Minolta C652SeriesPS)
-			## Opciones de CPUS (localhost:631):
-			# Account Track (Seguimiento de volumen EKC): Desactivado
-			# User Authentication: MFP - Servidor auten: 1 - Nombre de usuario: Custom -  Contraseña: Custom
-			if grep -a "PJL SET KMUSERNAME" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "0,/KMUSERNAME/{s#PJL SET KMUSERNAME = .*#PJL SET KMUSERNAME = \"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^(nameusu)/(${NOMBREPRINT})/g" "${TEADATAFILE}"
-			fi
-			if grep -a "PJL SET KMUSERKEY2" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "0,/KMUSERKEY2/{s#PJL SET KMUSERKEY2 = .*#PJL SET KMUSERKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
-				sed -i "s/^(1234)/(${USERCODEPRINT})/g" "${TEADATAFILE}"
-			fi
-
-			# Para Kyocera:
-			# p.e. CEIP Sarrión - Kyocera-Mita-TASKalfa-250ci (campo "jobaccounting" de CUPs - gestión Web):
-			# En el PPD de la Kyocera aparece como sigue:
-			## *DefaultKmManagment: MG12345678
-			## *KmManagment MG12345678/12345678: "(12345678) statusdict /setmanagementnumber get exec"
-			# A nivel de TeadataFile:
-			## %%BeginFeature: *KmManagment MG23834
-			## (23834) statusdict /setmanagementnumber get exec
-			# Cambiar el código 12345678 por el codigo de usuario introducido (se ha generalizado):
-			if grep -a "KmManagment" "${TEADATAFILE}" &> /dev/null ; then
-				sed -i "s/\(%%BeginFeature: .*KmManagment MG\)\(.*\)/\1${USERCODEPRINT}/g" "${TEADATAFILE}"
-				# sed -i "s/^(12345678)/(${USERCODEPRINT})/g" "${TEADATAFILE}"
-				sed -i "s#\((.*)\)\( statusdict /setmanagementnumber get exec\)#(${USERCODEPRINT})\2#g" "${TEADATAFILE}"
-			fi
-
-
-		else
-			#TEXTO="¡¡Error, El Código de Usuario <b>debe estar compuesto únicamente por dígitos<\/b>!!"
-			TEXTO="¡¡Error, Debes escribir un <b>Código de Usuario<\/b>!!"
-			TEXTO="${TEXTO}\\\nAdemás ... ¡¡<b>El Nombre no debe exceder de 12 caracteres<\/b>!!"
-			TEXTO="${TEXTO}\\\nPor favor, tecléalo de nuevo ...\\\n\\\n"
-			sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" /usr/share/vitalinux/printers-tea4cups/dialogo1.sh
-		fi
-	done
+    
+    VALIDO=0
+    TEXTO="\\\nEs necesario introducir un <b>Nombre<\/b> y\/o <b>Código de Usuario<\/b>."
+    TEXTO="${TEXTO}\\\nEstas credenciales se mantendrán activas para futuras ordenes de impresión \\\n"
+    TEXTO="${TEXTO}durante los próximos <b>5 minutos</b>. \\\n\\\n"
+    sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" "${DIALOGO1}"
+    
+    FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
+    TIME_GAP_MAX="$(crudini --get "${FICHTIMECODYSER}" general TIME_GAP_MAX 2> /dev/null)"
+    [ -z "${TIME_GAP_MAX}" ] && TIME_GAP_MAX="300"
+    
+    while test ${VALIDO} -eq 0 ; do
+        
+        FICH_CODUSER="/tmp/tea4cups-codusuario-${TEAUSERNAME}"
+        FICH_NAMEUSER="/tmp/tea4cups-nombreprint-${TEAUSERNAME}"
+        
+        if test -f "${FICH_CODUSER}" && \
+        test -f "${FICH_NAMEUSER}" ; then
+            # Comprobamos si se sacó el dialogo en los últimos 5 minutos
+            TIME_LAST_MIDIFIED="$(stat --format %Y "${FICH_CODUSER}")"
+            TIME_CURRENT="$(date +%s)"
+            TIME_GAP_CURRENT="$(( ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} ))"
+            TIME_VALID_USER="$(( ${TIME_GAP_MAX} - ${TIME_GAP_CURRENT} ))"
+            if test ${TIME_VALID_USER} -lt 0 ; then
+                TIME_VALID_USER="${TIME_GAP_MAX}"
+            fi
+            
+            (
+                echo "Perido máximo de Validez: ${TIME_GAP_MAX}"
+                echo "Perido de validez actual: ${TIME_VALID_USER}"
+                echo "Time Actual - Ultima Modificacion: ${TIME_CURRENT} - ${TIME_LAST_MIDIFIED} = ${TIME_GAP_CURRENT}"
+            ) > "/tmp/tea4cups-time_valid_user-${TEAUSERNAME}"
+            
+            if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
+                sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"${TIME_VALID_USER}\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
+            fi
+            
+            if test ${TIME_GAP_CURRENT} -gt ${TIME_GAP_MAX} ; then
+                solicitar_datos
+            fi
+        else
+            solicitar_datos
+            if test -f "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh" ; then
+                sed -i "s/^TIME_VALID_USER=\".*\"/TIME_VALID_USER=\"300\"/g" "/usr/share/vitalinux/printers-tea4cups/dialogo2.sh"
+            fi
+        fi
+        
+        USERCODEPRINT="$(cat /tmp/tea4cups-codusuario-${TEAUSERNAME})"
+        #sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=${USERCODEPRINT}/g" "${FICHVAR}"
+        ##sed -i "s/^USERCODEPRINT=.*/USERCODEPRINT=1234/g" "${FICHVAR}"
+        NAMEUSU="$(cat /tmp/tea4cups-nombreprint-${TEAUSERNAME} | tr -d '[:space:]')"
+        NOMBREPRINT="$(expr substr "${NAMEUSU}" 1 7)"
+        ##sed -i "s/^NOMBREPRINT=.*/NOMBREPRINT=${NOMBREPRINT}/g" "${FICHVAR}"
+        
+        # En el caso de que queramos imponer código compuesto solo por números
+        #if [[ "${USERCODEPRINT}" =~ ^[0-9]+$ ]] && [[ "${#NOMBREPRINT}" -le 8 ]] ; then
+        # En el CEIP Juan Pablo Bonet el código lleva letras
+        if [[ "${#USERCODEPRINT}" -ge 2 ]] && [[ "${#NOMBREPRINT}" -le 12 ]] ; then
+            VALIDO=1
+            
+            # Para PostScript de Sharp: Retencion de impresión en máquina
+            if grep -a "PJL SET USERNAME" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "0,/PJL SET USERNAME/{s#PJL SET USERNAME.*#PJL SET USERNAME = \"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "0,/^%%For:/{s#%%For: (.*)#%%For: (${NOMBREPRINT})#}" "${TEADATAFILE}"
+                break
+            fi
+            
+            # Para Ricoh PXL: PJL SET USERCODE
+            if grep -a "PJL SET USERCODE" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "0,/PJL SET USERCODE/{s#PJL SET USERCODE=.*#PJL SET USERCODE=\"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
+            fi
+            if grep -a "PJL SET JOBPASSWORD2" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "s/^@PJL SET JOBPASSWORD2=.*/@PJL SET JOBPASSWORD2=\"${USERCODEPRINT}\"/g" "${TEADATAFILE}"
+            fi
+            if grep -a "PJL SET USERID" "${TEADATAFILE}" &> /dev/null ; then
+                # sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "s/^@PJL SET USERID=.*/@PJL SET USERID=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
+            fi
+            if grep -a "PJL SET OWNERID" "${TEADATAFILE}" &> /dev/null ; then
+                # sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "s/^@PJL SET OWNERID=.*/@PJL SET OWNERID=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
+            fi
+            if grep -a "PJL SET HOSTLOGINNAME" "${TEADATAFILE}" &> /dev/null ; then
+                # sed -i "0,/PJL SET HOSTLOGINNAME/{s#PJL SET HOSTLOGINNAME=.*#PJL SET HOSTLOGINNAME=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "s/^@PJL SET HOSTLOGINNAME=.*/@PJL SET HOSTLOGINNAME=\"${NOMBREPRINT}\"/g" "${TEADATAFILE}"
+            fi
+            
+            # Para Ricoh PS
+            if grep -a "^/usrcode(.*)def" "${TEADATAFILE}" &> /dev/null ; then
+                #sed -i "s/9999/${USERCODEPRINT}/g" "${TEADATAFILE}"
+                sed -i "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
+                LINEA="$(grep -an "CustomUserCode" "${TEADATAFILE}" | cut -d":" -f1)"
+                LINEA="$(expr ${LINEA} + 1)"
+                sed -i "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
+                
+            fi
+            
+            # Para Konica: PJL SET KMSECTIONKEY2 (p.e. IES Torre de los Espejos)
+            if grep -a "PJL SET KMSECTIONKEY2" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "0,/KMSECTIONKEY2/{s#PJL SET KMSECTIONKEY2 = .*#PJL SET KMSECTIONKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
+            fi
+            
+            # Para Konica: Sin seguimiento de Volumen (EKC), pero con autenticación de usuario: KMUSERNAME y KMUSERKEY2
+            ### Konica (p.e. IES Miguel Servet - Konica Minolta C652SeriesPS)
+            ## Opciones de CPUS (localhost:631):
+            # Account Track (Seguimiento de volumen EKC): Desactivado
+            # User Authentication: MFP - Servidor auten: 1 - Nombre de usuario: Custom -  Contraseña: Custom
+            if grep -a "PJL SET KMUSERNAME" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "0,/KMUSERNAME/{s#PJL SET KMUSERNAME = .*#PJL SET KMUSERNAME = \"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "s/^(nameusu)/(${NOMBREPRINT})/g" "${TEADATAFILE}"
+            fi
+            if grep -a "PJL SET KMUSERKEY2" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "0,/KMUSERKEY2/{s#PJL SET KMUSERKEY2 = .*#PJL SET KMUSERKEY2 = \"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
+                sed -i "s/^(1234)/(${USERCODEPRINT})/g" "${TEADATAFILE}"
+            fi
+            
+            # Para Kyocera:
+            # p.e. CEIP Sarrión - Kyocera-Mita-TASKalfa-250ci (campo "jobaccounting" de CUPs - gestión Web):
+            # En el PPD de la Kyocera aparece como sigue:
+            ## *DefaultKmManagment: MG12345678
+            ## *KmManagment MG12345678/12345678: "(12345678) statusdict /setmanagementnumber get exec"
+            # A nivel de TeadataFile:
+            ## %%BeginFeature: *KmManagment MG23834
+            ## (23834) statusdict /setmanagementnumber get exec
+            # Cambiar el código 12345678 por el codigo de usuario introducido (se ha generalizado):
+            if grep -a "KmManagment" "${TEADATAFILE}" &> /dev/null ; then
+                sed -i "s/\(%%BeginFeature: .*KmManagment MG\)\(.*\)/\1${USERCODEPRINT}/g" "${TEADATAFILE}"
+                # sed -i "s/^(12345678)/(${USERCODEPRINT})/g" "${TEADATAFILE}"
+                sed -i "s#\((.*)\)\( statusdict /setmanagementnumber get exec\)#(${USERCODEPRINT})\2#g" "${TEADATAFILE}"
+            fi
+            
+            
+        else
+            #TEXTO="¡¡Error, El Código de Usuario <b>debe estar compuesto únicamente por dígitos<\/b>!!"
+            TEXTO="¡¡Error, Debes escribir un <b>Código de Usuario<\/b>!!"
+            TEXTO="${TEXTO}\\\nAdemás ... ¡¡<b>El Nombre no debe exceder de 12 caracteres<\/b>!!"
+            TEXTO="${TEXTO}\\\nPor favor, tecléalo de nuevo ...\\\n\\\n"
+            sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" "${DIALOGO1}"
+        fi
+    done
 fi
