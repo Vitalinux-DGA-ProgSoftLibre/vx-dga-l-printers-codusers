@@ -1,0 +1,21 @@
+[Desktop Entry]
+Encoding=UTF-8
+
+Name=Configure Tea4cups Print Dialog
+Name[en]=Configure Tea4cups Print Dialog
+Name[es]=Configurar Dialogo de Impresión de Tea4cups
+Name[es_ES]=Configurar Dialogo de Impresión de Tea4cups
+
+Comment=Configure Tea4cups Print Dialog
+Comment[en]=Configure Tea4cups Print Dialog
+Comment[es]=Configurar Dialogo de Impresión de Tea4cups
+Comment[es_ES]=Configurar Dialogo de Impresión de Tea4cups
+
+Icon=impresora-multifuncion
+
+Exec=vx-tea4cups-confoptions
+Terminal=false
+Type=Application
+Categories=Vitalinux;
+StartupNotify=true
+Hidden=false

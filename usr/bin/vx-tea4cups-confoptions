@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Rescatamos los valores de configuración existentes del fichero de configuración:
+# TIME_GAP_MAX=--- MODO_PASS=- PASSRETENCION=----
+FICHCONFTEA4CUPS="/etc/default/vx-dga-variables/vx-dga-l-tea4cups-print-codusers.conf"
+# Comprobamos el valor del tiempo de validez del código: (valor por defecto 5 minutos)
+TIME_GAP_MAX="$(crudini --get "${FICHCONFTEA4CUPS}" "general" "TIME_GAP_MAX" &> /dev/null)"
+[ -z "${TIME_GAP_MAX}" ] && TIME_GAP_MAX=300
+# Comprobamos si el código se ocultará al escribirlo.
+# Mediante ^ en el combo sacamos la opción por defecto:
+MODO_PASS="$(crudini --get "${FICHCONFTEA4CUPS}" "general" "MODO_PASS" &> /dev/null)"
+[ -z "${MODO_PASS}" ] && MODO_PASS=0
+(( ${MODO_PASS} == 0 )) && OPCIONES_MODO_PASS="Si!^No" | OPCIONES_MODO_PASS="^Si!No"
+# Comprobamos si hay password generica de retención:
+PASSRETENCION="$(crudini --get "${FICHCONFTEA4CUPS}" "general" "PASSRETENCION" &> /dev/null)"
+[ -z "${PASSRETENCION}" ] && MODO_PASS=9999
+
+if RESULTADO=$(yad --title "Gestión de Impresión en Vitalinux" \
+    --center \
+    --window-icon "vitalinux" --image "impresora-multifuncion" \
+    --text-align "center" \
+    --text "${TEXTO}" \
+    --form \
+    --field="Duración Validez de Código (segundos): " "${TIME_GAP_MAX}" \
+    --field="Ocultar Código Impresión: ":CB "${OPCIONES_MODO_PASS}" \
+    --field="Password Retención Impresión: " "${PASSRETENCION}" \
+    --button="Asignar:0" --button="Cancelar:1") ; then
+    VALOR1="$(echo "${RESULTADO}" | cut -d"|" -f1)"
+    [[ "$(echo "${RESULTADO}" | cut -d"|" -f2)" == "Si" ]] && VALOR2=1 || VALOR2=0
+    VALOR3="$(echo "${RESULTADO}" | cut -d"|" -f3)"
+    vx-tea4cups-confoptions-cli TIME_GAP_MAX=${VALOR1} MODO_PASS=${VALOR2} PASSRETENCION=${VALOR3}
+fi

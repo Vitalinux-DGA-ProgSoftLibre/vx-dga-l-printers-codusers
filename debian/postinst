@@ -116,14 +116,12 @@ FORMA_ANTERIOR
             #echo "=> Se han añadido los scripts prehook y posthook para guardar el JOB temporalmente ..."
             #fi
             
-            FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
+            FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-dga-l-tea4cups-print-codusers.conf"
             [ ! -f "${FICHTIMECODYSER}" ] && \
-            echo -e '[general]\nTIME_GAP_MAX=300\nMODO_PASS=0' > "${FICHTIMECODYSER}"
+            echo -e '[general]\nTIME_GAP_MAX=300\nMODO_PASS=0\nPASSRETENCION=0' > "${FICHTIMECODYSER}"
             
-            if ! test -d /var/log/vitalinux ; then
-                mkdir -p /var/log/vitalinux
-                chmod 755 /var/log/vitalinux
-            fi
+            DIRLOG="/var/log/vitalinux"
+            [ ! -d "${DIRLOG}" ] && mkdir -p "${DIRLOG}" && chmod 755 "${DIRLOG}"
             
             FICHERO="/var/log/vitalinux/printaccounting.log.html"
             if ! test -f "${FICHERO}" ; then

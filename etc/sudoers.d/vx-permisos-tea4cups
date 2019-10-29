@@ -5,3 +5,5 @@ ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-conf-tea4cups
 ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-tea4cups-resetear-coduser
 #ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-imprimir-con-usercode
 #ALL ALL = (ALL) NOPASSWD: /usr/bin/vx-imprimir-con-usercode-info
+# Permitimos cancelar todos los trabajos de impresión pendientes:
+ALL ALL=(ALL) NOPASSWD: /usr/bin/cancel -a

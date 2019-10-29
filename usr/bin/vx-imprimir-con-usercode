@@ -4,8 +4,8 @@
 . /etc/default/vx-dga-variables/vx-dga-variables-general.conf
 FICHVAR="/etc/default/vx-dga-variables/vx-dga-variables-general.conf"
 
-FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
-MODO_PASS="$(crudini --get "${FICHTIMECODYSER}" general MODO_PASS 2> /dev/null)"
+FICHCONFTEA4CUPS="/etc/default/vx-dga-variables/vx-dga-l-tea4cups-print-codusers.conf"
+MODO_PASS="$(crudini --get "${FICHCONFTEA4CUPS}" general MODO_PASS 2> /dev/null)"
 [ -z "${MODO_PASS}" ] && MODO_PASS="0"
 [ "${MODO_PASS}" == "0" ] && \
 DIALOGO1="/usr/share/vitalinux/printers-tea4cups/dialogo1.sh" || \
@@ -43,8 +43,8 @@ if test "${USUARIO}" = "root" ; then
     TEXTO="${TEXTO}durante los próximos <b>5 minutos</b>. \\\n\\\n"
     sed -i "s#TEXTO=\".*\"#TEXTO=\"${TEXTO}\"#g" "${DIALOGO1}"
     
-    FICHTIMECODYSER="/etc/default/vx-dga-variables/vx-tea4cups-codusers"
-    TIME_GAP_MAX="$(crudini --get "${FICHTIMECODYSER}" general TIME_GAP_MAX 2> /dev/null)"
+    FICHCONFTEA4CUPS="/etc/default/vx-dga-variables/vx-dga-l-tea4cups-print-codusers.conf"
+    TIME_GAP_MAX="$(crudini --get "${FICHCONFTEA4CUPS}" general TIME_GAP_MAX 2> /dev/null)"
     [ -z "${TIME_GAP_MAX}" ] && TIME_GAP_MAX="300"
     
     while test ${VALIDO} -eq 0 ; do
@@ -96,6 +96,7 @@ if test "${USUARIO}" = "root" ; then
         if [[ "${#USERCODEPRINT}" -ge 2 ]] && [[ "${#NOMBREPRINT}" -le 12 ]] ; then
             VALIDO=1
             
+            ## Sharp:
             # Para PostScript de Sharp: Retencion de impresión en máquina
             if grep -a "PJL SET USERNAME" "${TEADATAFILE}" &> /dev/null ; then
                 sed -i "0,/PJL SET USERNAME/{s#PJL SET USERNAME.*#PJL SET USERNAME = \"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
@@ -103,12 +104,21 @@ if test "${USUARIO}" = "root" ; then
                 break
             fi
             
+            ## Ricoh:
             # Para Ricoh PXL: PJL SET USERCODE
             if grep -a "PJL SET USERCODE" "${TEADATAFILE}" &> /dev/null ; then
                 sed -i "0,/PJL SET USERCODE/{s#PJL SET USERCODE=.*#PJL SET USERCODE=\"${USERCODEPRINT}\"#}" "${TEADATAFILE}"
             fi
+            # Para personalizar la Password de Retención de copias: PASSRETENCION
+            if JOBPASSWORD2="$(crudini --get "${FICHCONFTEA4CUPS}" general PASSRETENCION 2> /dev/null)" ; then
+                if [ "${JOBPASSWORD2}" == "0" ] ; then
+                    JOBPASSWORD2="${USERCODEPRINT}"
+                fi
+            else
+                JOBPASSWORD2="${USERCODEPRINT}"
+            fi
             if grep -a "PJL SET JOBPASSWORD2" "${TEADATAFILE}" &> /dev/null ; then
-                sed -i "s/^@PJL SET JOBPASSWORD2=.*/@PJL SET JOBPASSWORD2=\"${USERCODEPRINT}\"/g" "${TEADATAFILE}"
+                sed -i "s/^@PJL SET JOBPASSWORD2=.*/@PJL SET JOBPASSWORD2=\"${JOBPASSWORD2}\"/g" "${TEADATAFILE}"
             fi
             if grep -a "PJL SET USERID" "${TEADATAFILE}" &> /dev/null ; then
                 # sed -i "0,/PJL SET USERID/{s#PJL SET USERID=.*#PJL SET USERID=\"${NOMBREPRINT}\"#}" "${TEADATAFILE}"
@@ -128,9 +138,9 @@ if test "${USUARIO}" = "root" ; then
                 #sed -i "s/9999/${USERCODEPRINT}/g" "${TEADATAFILE}"
                 sed -i "0,/^\/usrcode/{s/^\/usrcode(.*)/\/usrcode(${USERCODEPRINT})/}" "${TEADATAFILE}"
                 LINEA="$(grep -an "CustomUserCode" "${TEADATAFILE}" | cut -d":" -f1)"
-                LINEA="$(expr ${LINEA} + 1)"
+                #LINEA="$(expr ${LINEA} + 1)"
+                ((LINEA++))
                 sed -i "${LINEA}s/(.*)/(${USERCODEPRINT})/" "${TEADATAFILE}"
-                
             fi
             
             # Para Konica: PJL SET KMSECTIONKEY2 (p.e. IES Torre de los Espejos)

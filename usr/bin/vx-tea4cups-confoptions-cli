@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# Script que permite configurar las opciones del dialogo de códigos de usuario de Tea4cups:
+## TIME_GAP_MAX=300 # Tiempo de validez de los códigos introducidos antes de volverlos a solicitar
+## MODO_PASS=0 # Opción que permite ocultar el código introducido en el input en modo password
+## PASSRETENCION=0 # Configuración de la password de retención/locked cuando quedan retenidos los trabajos
+
+USER="$(whoami)"
+
+function salir() {
+    MENSAJE="=> Necesitas privilegios de \"root\" para ejecutar este script ..."
+    MENSAJE="${MENSAJE}\n=> Ejemplos de uso:"
+    MENSAJE="${MENSAJE}\n=> vx-tea4cups-confoptions-cli TIME_GAP_MAX=100 MODO_PASS=0 PASSRETENCION=9999"
+    MENSAJE="${MENSAJE}\n=> vx-tea4cups-confoptions-cli mute TIME_GAP_MAX=200 MODO_PASS=1"
+    MENSAJE="${MENSAJE}\n=> vx-tea4cups-confoptions-cli mute reset"
+    echo -e "${MENSAJE}"
+    exit ${1}
+}
+
+[ "${USER}" != "root" ] && salir "1"
+FICHCONFTEA4CUPS="/etc/default/vx-dga-variables/vx-dga-l-tea4cups-print-codusers.conf"
+
+function configurar_opciones() {
+    until [ -z "${1}" ] ; do
+        OPCION="$(echo "${1}" | cut -d"=" -f1)"
+        VALOR="$(echo "${1}" | cut -d"=" -f2)"
+        if crudini --set --existing "${FICHCONFTEA4CUPS}" "general" "${OPCION}" "${VALOR}" &> /dev/null ; then
+            (( MUTE == 0 )) && echo -e "=> Ok!! Se ha configurado la Opción: ${OPCION} = ${VALOR}"
+        else
+            (( MUTE == 0 )) && echo -e "=> Error al asignar ${OPCION} = ${VALOR} !!" && salir "1"
+        fi
+        shift
+    done
+}
+
+# Comprobamos si el primer parametro es "mute" para no mostrar mensajes de salida:
+MUTE=0
+[[ "${1}" == "mute" ]] && MUTE=1 && shift
+
+# Reseteamos a valores por defecto en el caso de que el primer parametro sea "reset":
+# Valores por defecto: TIME_GAP_MAX=300 MODO_PASS=0 PASSRETENCION=0
+[[ "${1}" == "reset" ]] && configurar_opciones TIME_GAP_MAX=300 MODO_PASS=0 PASSRETENCION=0 && exit 0
+
+# Comprobamos que haya algún parámetro:
+[ -z "${1}" ] && salir "1"
+configurar_opciones ${@}
+exit 0

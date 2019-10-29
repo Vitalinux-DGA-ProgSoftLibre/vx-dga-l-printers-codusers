@@ -1,0 +1,63 @@
+variables:
+  _USER: "builduser"
+  _PATH: /home/$_USER/$CI_PROJECT_NAME
+
+stages:
+  - build
+  - upload
+
+build-vitalinux14:
+  image: vitalinux14:dev
+  stage: build
+  script:
+    - useradd -m $_USER
+    - mkdir -p $_PATH
+    - mv * $_PATH
+    - pushd $_PATH
+    - su -c "/usr/bin/debuild --no-tgz-check -us -uc" $_USER
+    - popd
+    - mv /home/$_USER/*.deb .
+  artifacts:
+    expire_in: 1 days
+    paths:
+      - ./*.deb
+  only:
+    - tags
+
+upload-vitalinux14:
+  image: vitalinux14:dev
+  stage: upload
+  script:
+    - MIGASFREE_PACKAGER_PROJECT=Lubuntu-14.04 migasfree-upload -f *.deb
+  dependencies:
+    - build-vitalinux14
+  only:
+    - tags
+
+build-vitalinux18:
+  image: vitalinux18:dev
+  stage: build
+  script:
+    - useradd -m $_USER
+    - mkdir -p $_PATH
+    - mv * $_PATH
+    - pushd $_PATH
+    - su -c "/usr/bin/debuild --no-tgz-check -us -uc" $_USER
+    - popd
+    - mv /home/$_USER/*.deb .
+  artifacts:
+    expire_in: 1 days
+    paths:
+      - ./*.deb
+  only:
+    - tags
+
+upload-vitalinux18:
+  image: vitalinux18:dev
+  stage: upload
+  script:
+    - MIGASFREE_PACKAGER_PROJECT=VX-18.04 migasfree-upload -f *.deb
+  dependencies:
+    - build-vitalinux18
+  only:
+    - tags

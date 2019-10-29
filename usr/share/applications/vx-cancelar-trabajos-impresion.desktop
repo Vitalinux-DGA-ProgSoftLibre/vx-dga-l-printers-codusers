@@ -1,0 +1,21 @@
+[Desktop Entry]
+Encoding=UTF-8
+
+Name=Cancel all print jobs
+Name[en]=Cancel all print jobs
+Name[es]=Cancelar todos los trabajos de Impresión
+Name[es_ES]=Cancelar todos los trabajos de Impresión
+
+Comment=Cancel all print jobs
+Comment[en]=Cancel all print jobs
+Comment[es]=Cancelar todos los trabajos de Impresión
+Comment[es_ES]=Cancelar todos los trabajos de Impresión
+
+Icon=impresora-multifuncion
+
+Exec=cancel -a
+Terminal=false
+Type=Application
+Categories=System;Settings;Printing;
+StartupNotify=true
+Hidden=false

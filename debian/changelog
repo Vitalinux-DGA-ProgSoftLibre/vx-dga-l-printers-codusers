@@ -1,3 +1,20 @@
+vx-dga-l-printers-codusers (1.1-7) unstable; urgency=low
+
+  * Añadimos la dependencia con cups-pdf | printer-driver-cups-pdf para impresoras PDFs
+  * Modificamos el nombre del archivo de configuración vx-tea4cups-codusers vx-dga-l-tea4cups-print-codusers.conf
+  * Añadimos la opción de poder cancelar los trabajos de impresión
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Tue, 29 Oct 2019 00:30:00 +0200
+
+vx-dga-l-printers-codusers (1.1-6) unstable; urgency=low
+
+  * Se añade en /etc/default/vx-dga-variables/vx-tea4cups-codusers una variable:
+  * PASSRETENCION para personalizar la pass de retención/locked de RICOH
+  * Tiene la limitación de que no puede ser menor de 4 digitos
+  * Demandado por el IES Conde Aranda de Alagón
+
+ -- Arturo Martin Romero <amartinromero@gmail.com>  Thu, 20 Jun 2019 01:00:00 +0200
+
 vx-dga-l-printers-codusers (1.1-5) unstable; urgency=low
 
   * Se añade la opción PJL SET USERNAME para los PPDs de Sharp
